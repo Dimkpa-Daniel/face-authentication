@@ -30,12 +30,12 @@ type Props = {
 
 const WebcamFeed = ({ videoRef, isScanning = false }: Props) => {
   return (
-    <div className="relative w-full max-w-md aspect-video border border-gray-300 rounded overflow-hidden h-[250px]">
+    <div className="relative w-full max-w-md aspect-video border border-gray-300 rounded overflow-hidden h-[250px] sm:h-[200px]">
       <Webcam
         ref={videoRef}
         audio={false}
         screenshotFormat="image/jpeg"
-        className="w-full h-[250px] object-cover"
+        className="w-full h-[250px] sm:h-[200px] object-cover"
       />
       {isScanning && (
         <div className="absolute inset-0 z-10 bg-transparent bg-opacity-30">
