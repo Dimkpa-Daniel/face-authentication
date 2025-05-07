@@ -2,7 +2,7 @@ import { useRef, useState } from "react";
 import WebcamFeed from "../components/WebcamFeed";
 import { loadModels, getFaceDescriptor } from "../lib/faceUtils";
 import { db } from "../lib/firebase";
-import { doc, setDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 import Webcam from "react-webcam";
 import { useAtom } from "jotai";
 import { userAtom } from "@/atoms/state";
@@ -37,6 +37,13 @@ const Register = () => {
       const video = webcamRef.current?.video;
       if (!video) {
         toast.error("Webcam not accessible");
+        return;
+      }
+
+      // Check if user with same email already exists
+      const existingDoc = await getDoc(doc(db, "faceUsers", email.trim()));
+      if (existingDoc.exists()) {
+        toast.error("User already exists with this email");
         return;
       }
 
