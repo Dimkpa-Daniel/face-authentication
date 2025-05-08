@@ -91,6 +91,7 @@ const Register = () => {
     }
   };
 
+  const isDisabled = isLoading || !email || !firstName || !lastName;
   return (
     <main>
       <Head>
@@ -128,8 +129,8 @@ const Register = () => {
 
           <button
             onClick={handleRegister}
-            className="bg-green-800 text-white font-bold py-2 px-4 rounded mt-3"
-            disabled={isLoading || !email || !firstName || !lastName}
+            className={`${isDisabled ? 'bg-gray-400' : 'bg-green-800'} text-white font-bold py-2 px-4 rounded mt-3`}
+            disabled={isDisabled}
           >
             {isLoading ? "Registering..." : "Register Face"}
           </button>
