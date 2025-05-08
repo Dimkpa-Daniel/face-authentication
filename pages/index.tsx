@@ -1,8 +1,8 @@
 import { useRef, useState } from "react";
 import WebcamFeed from "../components/WebcamFeed";
-import { loadModels, getFaceDescriptor } from "../lib/faceUtils";
+import { loadModels, getFaceDescriptor, compareDescriptors } from "../lib/faceUtils";
 import { db } from "../lib/firebase";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { collection, doc, getDoc, getDocs, setDoc } from "firebase/firestore";
 import Webcam from "react-webcam";
 import { useAtom } from "jotai";
 import { userAtom } from "@/atoms/state";
@@ -58,6 +58,17 @@ const Register = () => {
       if (descriptors.length > 0) {
         // Calculate average face descriptor
         const averagedDescriptor = averageDescriptors(descriptors);
+
+         // Check if this face already exists in the collection
+      const querySnapshot = await getDocs(collection(db, "faceUsers"));
+      for (const docSnap of querySnapshot.docs) {
+        const storedDescriptor = new Float32Array(docSnap.data().descriptor);
+        const distance = compareDescriptors(averagedDescriptor, storedDescriptor);
+        if (distance < 0.6) {
+          toast.error("A user with this face already exists");
+          return;
+        }
+      }
 
         // Save user data to Firestore
         await setDoc(doc(db, "faceUsers", email.trim()), {
