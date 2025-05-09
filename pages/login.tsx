@@ -71,9 +71,10 @@ const Login = () => {
       // Compare current face with stored descriptor
       const storedDescriptor = new Float32Array(snapshot.data().descriptor);
       const distance = compareDescriptors(averagedDescriptor, storedDescriptor);
+      console.log("Computed face distance:", distance); // Log it for debugging
 
-      // A threshold distance of < 0.6 means a match
-      if (distance < 0.6) {
+      // A threshold distance of < 0.4 means a match
+      if (distance < 0.4) {
         const { firstName, lastName } = snapshot.data();
         setUser({ email, firstName, lastName });
         toast.success("Login successful!");
