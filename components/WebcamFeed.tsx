@@ -38,7 +38,7 @@ const WebcamFeed = ({ videoRef, isScanning = false }: Props) => {
         className="w-full h-[250px] sm:h-[200px] object-cover"
       />
       {isScanning && (
-        <div className="absolute inset-0 z-10 bg-transparent bg-opacity-30">
+        <div className="absolute inset-0 z-10 bg-black opacity-30">
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="scanner-line animate-scan" />
           </div>

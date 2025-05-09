@@ -84,8 +84,9 @@ const Register = () => {
         toast.error("No face detected.");
       }
     } catch (err) {
-      console.error(err);
-      toast.error("An error occurred during registration.");
+      // console.error("Error during registration:", err);
+      const errorMessage = err instanceof Error ? err.message : "An unknown error occurred.";
+      toast.error(`An error occurred during registration: ${errorMessage}`);
     } finally {
       setIsLoading(false);
     }
