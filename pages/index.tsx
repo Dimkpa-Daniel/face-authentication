@@ -12,7 +12,11 @@ import CustomInputField from "@/components/CustomInputField";
 import Head from "next/head";
 import { averageDescriptors } from "@/utils/faceUtilsHelpers";
 
+
+
+
 const Register = () => {
+const canvasRef = useRef<HTMLCanvasElement>(null); // canvasRef
   const webcamRef = useRef<Webcam>(null);
   const [email, setEmail] = useState("");
   const [firstName, setFirstName] = useState("");
@@ -22,75 +26,83 @@ const Register = () => {
   const router = useRouter();
 
   const handleRegister = async () => {
-    // Ensure all fields are filled
     if (!email || !firstName || !lastName) {
       toast.error("Please fill all fields");
       return;
     }
-
+  
     try {
       setIsLoading(true);
       toast.info("Loading models and scanning...");
-      // Load face detection models
+  
+      // Load models for face detection
       await loadModels();
-
+  
       const video = webcamRef.current?.video;
-      if (!video) {
-        toast.error("Webcam not accessible");
+      if (!video || video.readyState !== 4) {
+        toast.error("Webcam is not ready. Please wait or refresh.");
         return;
       }
-
+  
       // Check if user with same email already exists
       const existingDoc = await getDoc(doc(db, "faceUsers", email.trim()));
       if (existingDoc.exists()) {
         toast.error("User already exists with this email");
         return;
       }
-
+  
       const descriptors: Float32Array[] = [];
-
-      // Capture multiple face descriptors to improve accuracy
+  
+      // Attempt to collect 3 valid descriptors with 500ms delay
       for (let i = 0; i < 5; i++) {
-        const descriptor = await getFaceDescriptor(video);
+        const descriptor = await getFaceDescriptor(video, canvasRef.current ?? undefined);
         if (descriptor) descriptors.push(descriptor);
+  
+        if (descriptors.length === 3) break;
+        await new Promise((res) => setTimeout(res, 500));
       }
-
-      if (descriptors.length > 0) {
-        // Calculate average face descriptor
-        const averagedDescriptor = averageDescriptors(descriptors);
-
-         // Check if this face already exists in the collection
+  
+      if (descriptors.length < 1) {
+        toast.error("No face detected. Please ensure good lighting and try again.");
+        return;
+      }
+  
+      // Average face descriptors
+      const averagedDescriptor = averageDescriptors(descriptors);
+  
+      // Check if this face already exists in the database
       const querySnapshot = await getDocs(collection(db, "faceUsers"));
       for (const docSnap of querySnapshot.docs) {
         const storedDescriptor = new Float32Array(docSnap.data().descriptor);
         const distance = compareDescriptors(averagedDescriptor, storedDescriptor);
-        if (distance < 0.6) {
+  
+        // Log distances (optional during development)
+        // console.log("Distance with user", docSnap.id, ":", distance);
+  
+        if (distance < 0.45) {
           toast.error("A user with this face already exists");
           return;
         }
       }
-
-        // Save user data to Firestore
-        await setDoc(doc(db, "faceUsers", email.trim()), {
-          firstName: firstName.trim(),
-          lastName: lastName.trim(),
-          descriptor: Array.from(averagedDescriptor),
-        });
-
-        setUser({ email, firstName, lastName });
-        toast.success("Registration successful!");
-        router.push("/login");
-      } else {
-        toast.error("No face detected.");
-      }
+  
+      // Save new user to Firestore
+      await setDoc(doc(db, "faceUsers", email.trim()), {
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+        descriptor: Array.from(averagedDescriptor),
+      });
+  
+      setUser({ email, firstName, lastName });
+      toast.success("Registration successful!");
+      router.push("/login");
     } catch (err) {
-      // console.error("Error during registration:", err);
       const errorMessage = err instanceof Error ? err.message : "An unknown error occurred.";
       toast.error(`An error occurred during registration: ${errorMessage}`);
     } finally {
       setIsLoading(false);
     }
   };
+  
 
   const isDisabled = isLoading || !email || !firstName || !lastName;
   return (
@@ -126,7 +138,7 @@ const Register = () => {
             disabled={isLoading}
           />
 
-          <WebcamFeed videoRef={webcamRef} isScanning={isLoading} />
+          <WebcamFeed videoRef={webcamRef} canvasRef={canvasRef} isScanning={isLoading} />
 
           <button
             onClick={handleRegister}

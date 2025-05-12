@@ -17,6 +17,7 @@ import Head from "next/head";
 import { averageDescriptors } from "@/utils/faceUtilsHelpers";
 
 const Login = () => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const webcamRef = useRef<Webcam>(null);
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -46,7 +47,7 @@ const Login = () => {
 
       // Capture multiple face descriptors with delay to increase reliability
       for (let i = 0; i < 5; i++) {
-        const desc = await getFaceDescriptor(video);
+        const desc = await getFaceDescriptor(video, canvasRef.current ?? undefined);
         if (desc) descriptors.push(desc);
         if (descriptors.length === 3) break;
         await new Promise((res) => setTimeout(res, 500));
@@ -107,7 +108,7 @@ const Login = () => {
             onChange={(e) => setEmail(e.target.value)}
             disabled={isLoading}
           />
-          <WebcamFeed videoRef={webcamRef} isScanning={isLoading} />
+          <WebcamFeed videoRef={webcamRef} canvasRef={canvasRef} isScanning={isLoading} />
           <button
             onClick={handleLogin}
             className="bg-green-800 text-white font-bold py-2 px-4 rounded mt-3"

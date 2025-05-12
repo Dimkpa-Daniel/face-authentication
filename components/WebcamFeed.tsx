@@ -19,16 +19,32 @@
 // };
 
 // export default WebcamFeed;
-
-import React from 'react';
+import React, { useEffect } from 'react';
 import Webcam from 'react-webcam';
 
 type Props = {
   videoRef: React.RefObject<Webcam | null>;
+  canvasRef: React.RefObject<HTMLCanvasElement | null>;
   isScanning?: boolean;
 };
 
-const WebcamFeed = ({ videoRef, isScanning = false }: Props) => {
+const WebcamFeed = ({ videoRef, canvasRef, isScanning = false }: Props) => {
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (
+        isScanning &&
+        videoRef.current?.video &&
+        canvasRef.current &&
+        videoRef.current.video.readyState >= 2
+      ) {
+        const ctx = canvasRef.current.getContext('2d');
+        if (ctx) ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+      }
+    }, 1000); // clear face box every second
+
+    return () => clearInterval(interval);
+  }, [isScanning, videoRef]);
+
   return (
     <div className="relative w-full max-w-md aspect-video border border-gray-300 rounded overflow-hidden h-[250px] sm:h-[200px]">
       <Webcam
@@ -36,6 +52,10 @@ const WebcamFeed = ({ videoRef, isScanning = false }: Props) => {
         audio={false}
         screenshotFormat="image/jpeg"
         className="w-full h-[250px] sm:h-[200px] object-cover"
+      />
+      <canvas
+        ref={canvasRef}
+        className="absolute top-0 left-0 w-full h-full z-20 pointer-events-none"
       />
       {isScanning && (
         <div className="absolute inset-0 z-10 bg-black opacity-65">
@@ -49,4 +69,3 @@ const WebcamFeed = ({ videoRef, isScanning = false }: Props) => {
 };
 
 export default WebcamFeed;
-
